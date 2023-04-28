@@ -2,6 +2,7 @@
 .gradle
 /local.properties
 /.idea/*
+/.idea/misc.xml
 /.idea/caches
 /.idea/libraries
 /.idea/modules.xml
@@ -16,3 +17,5 @@
 local.properties
 /app/build/*
 /.idea/vcs.xml
+/.idea/kotlinc.xml
+/.idea/jarRepositories.xml
