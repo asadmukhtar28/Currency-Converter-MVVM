@@ -9,6 +9,9 @@
 /.idea/workspace.xml
 /.idea/navEditor.xml
 /.idea/assetWizardSettings.xml
+/.idea/gradle.xml
+/gradlew.bat
+/gradlew
 .DS_Store
 /build
 /captures
@@ -19,3 +22,4 @@ local.properties
 /.idea/vcs.xml
 /.idea/kotlinc.xml
 /.idea/jarRepositories.xml
+/gradle/wrapper/*
