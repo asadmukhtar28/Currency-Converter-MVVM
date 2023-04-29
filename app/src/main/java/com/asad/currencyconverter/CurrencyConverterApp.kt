@@ -45,7 +45,11 @@ class CurrencyConverterApp : Application(), Configuration.Provider {
     override fun onCreate() {
         super.onCreate()
         initTimber()
+        observeInternetConnectivity()
+        scheduleWorkManager()
+    }
 
+    private fun observeInternetConnectivity() {
         CoroutineScope(Dispatchers.IO).launch {
             NetworkConnectivityObserverImpl(this@CurrencyConverterApp).observer().collect {
                 isNetworkConnected = when (it) {
@@ -54,7 +58,6 @@ class CurrencyConverterApp : Application(), Configuration.Provider {
                 }
             }
         }
-        scheduleWorkManager()
     }
 
     private fun scheduleWorkManager() {
