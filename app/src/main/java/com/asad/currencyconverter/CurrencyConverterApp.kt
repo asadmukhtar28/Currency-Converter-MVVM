@@ -30,16 +30,13 @@ class CurrencyConverterApp : Application(), Configuration.Provider {
     lateinit var appDataManager: AppDataManager
 
     private val constraint by lazy {
-        Constraints.Builder()
-            .setRequiredNetworkType(NetworkType.CONNECTED)
-            .build()
+        Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build()
     }
 
     private val worker by lazy {
-        PeriodicWorkRequestBuilder<ExchangeCurrencyWorker>(1, TimeUnit.MINUTES)
-            .setConstraints(constraint)
-            .setInitialDelay(0, TimeUnit.MILLISECONDS)
-            .build()
+        PeriodicWorkRequestBuilder<ExchangeCurrencyWorker>(1, TimeUnit.DAYS).setConstraints(
+            constraint
+        ).setInitialDelay(0, TimeUnit.MILLISECONDS).build()
     }
 
     override fun onCreate() {
