@@ -18,8 +18,13 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.CircularProgressIndicator
+import androidx.compose.material.Scaffold
+import androidx.compose.material.Snackbar
+import androidx.compose.material.SnackbarHost
+import androidx.compose.material.SnackbarHostState
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
+import androidx.compose.material.TextButton
 import androidx.compose.material.TextField
 import androidx.compose.material.TextFieldDefaults
 import androidx.compose.runtime.*
@@ -39,60 +44,105 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.asad.currencyconverter.R
 import com.asad.currencyconverter.data.local.models.CurrencyRatesDbModel
+import com.asad.currencyconverter.ui.ContentState
+import com.asad.currencyconverter.ui.ErrorState
+import com.asad.currencyconverter.ui.LoadingState
+import com.asad.currencyconverter.ui.MainActivityViewModel
 import com.asad.currencyconverter.ui.theme.CurrencyConverterTheme
+import kotlinx.coroutines.launch
 
 @Composable
-fun CurrencyConverter(viewModel: CurrencyRatesViewModel = viewModel()) {
+fun CurrencyConverter(viewModel: MainActivityViewModel = viewModel()) {
     val uiState = viewModel.uiState.collectAsState()
-    val currencyRatesList = viewModel.currencyRatesList.collectAsState().value
+    val currencyRatesList = viewModel.originalCurrencyRatesList.collectAsState().value
+    val conversionCurrencyRatesList = viewModel.conversionCurrencyRatesList.collectAsState().value
     val selectedCurrency = viewModel.selectedCurrency.collectAsState().value
 
     var amount by rememberSaveable {
         mutableStateOf(0.toDouble())
     }
 
-    Column(modifier = Modifier.fillMaxSize()) {
-        HeaderSection(
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            amount = it
-            viewModel.performConversion(amount)
-        }
-
-        when (uiState.value) {
-            is LoadingState -> {
-                LoadingState(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(
-                            color = Color.White,
-                            shape = RoundedCornerShape(topStart = 10.dp, topEnd = 10.dp)
-                        )
-                )
-            }
-
-            is ContentState -> {
-                CurrenciesList(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(
-                            color = Color.White,
-                            shape = RoundedCornerShape(topStart = 10.dp, topEnd = 10.dp)
-                        ), selectedCurrency, currencyRatesList
-                ) { currencyRatesModel ->
-                    viewModel.updateSelectedCurrency(currencyRatesModel)
+    val snackBarHostState = remember { SnackbarHostState() }
+    val coroutineScope = rememberCoroutineScope()
+    Scaffold(modifier = Modifier.fillMaxWidth(),
+        snackbarHost = {
+            SnackbarHost(
+                hostState = snackBarHostState,
+                snackbar = { data ->
+                    Snackbar(
+                        modifier = Modifier.padding(16.dp),
+                        content = { Text(data.message) },
+                        action = {
+                            data.actionLabel?.let { label ->
+                                TextButton(onClick = { data.performAction() }) {
+                                    Text(label)
+                                }
+                            }
+                        }
+                    )
                 }
-            }
+            )
+        },
+        topBar = {
+            HeaderSection(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(color = Color.Black)
+            ) {
+                if (it.isNotEmpty()) {
+                    amount = it.toDouble()
+                    viewModel.performConversion(amount)
+                } else {
+                    coroutineScope.launch {
+                        snackBarHostState.showSnackbar("Please Enter amount")
+                    }
+                }
 
-            is ErrorState -> {
-                ErrorState(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(
-                            color = Color.White,
-                            shape = RoundedCornerShape(topStart = 10.dp, topEnd = 10.dp)
-                        )
-                )
+            }
+        }
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+        ) {
+            when (uiState.value) {
+                is LoadingState -> {
+                    LoadingState(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(
+                                color = Color.White,
+                                shape = RoundedCornerShape(topStart = 10.dp, topEnd = 10.dp)
+                            )
+                    )
+                }
+
+                is ContentState -> {
+                    CurrenciesList(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(
+                                color = Color.White,
+                                shape = RoundedCornerShape(topStart = 10.dp, topEnd = 10.dp)
+                            ),
+                        selectedCurrency,
+                        conversionCurrencyRatesList.ifEmpty { currencyRatesList }
+                    ) { currencyRatesModel ->
+                        viewModel.updateSelectedCurrency(currencyRatesModel)
+                    }
+                }
+
+                is ErrorState -> {
+                    ErrorState(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(
+                                color = Color.White,
+                                shape = RoundedCornerShape(topStart = 10.dp, topEnd = 10.dp)
+                            )
+                    )
+                }
             }
         }
 
@@ -207,7 +257,7 @@ fun ItemCurrencyPreview() {
 @OptIn(ExperimentalUnitApi::class)
 @Composable
 fun HeaderSection(
-    modifier: Modifier = Modifier, onAmountValueChange: (amount: Double) -> Unit
+    modifier: Modifier = Modifier, onAmountValueChange: (amount: String) -> Unit
 ) {
     var amount by rememberSaveable {
         mutableStateOf("")
@@ -248,7 +298,7 @@ fun HeaderSection(
                     color = Color.White,
                     fontSize = TextUnit(25f, TextUnitType.Sp),
                     modifier = Modifier.clickable {
-                        onAmountValueChange.invoke(amount.toDouble())
+                        onAmountValueChange.invoke(amount)
                     })
             },
             textStyle = TextStyle(fontSize = TextUnit(30f, TextUnitType.Sp)),

@@ -1,4 +1,4 @@
-package com.asad.currencyconverter.ui.currencyrates
+package com.asad.currencyconverter.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -13,14 +13,21 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class CurrencyRatesViewModel @Inject constructor(private val repository: CurrencyRatesRepository) :
+class MainActivityViewModel @Inject constructor(private val repository: MainRepository) :
     ViewModel() {
 
     private val _uiState = MutableStateFlow<UiStates>(LoadingState)
     val uiState: StateFlow<UiStates> = _uiState
 
-    private val _currencyRatesList = MutableStateFlow<List<CurrencyRatesDbModel>>(arrayListOf())
-    val currencyRatesList: StateFlow<List<CurrencyRatesDbModel>> = _currencyRatesList
+    private val _originalCurrencyRatesList =
+        MutableStateFlow<List<CurrencyRatesDbModel>>(arrayListOf())
+    val originalCurrencyRatesList: StateFlow<List<CurrencyRatesDbModel>> =
+        _originalCurrencyRatesList
+
+    private val _conversionCurrencyRatesList =
+        MutableStateFlow<List<CurrencyRatesDbModel>>(arrayListOf())
+    val conversionCurrencyRatesList: StateFlow<List<CurrencyRatesDbModel>> =
+        _conversionCurrencyRatesList
 
     private val _selectedCurrency = MutableStateFlow(CurrencyRatesDbModel())
     val selectedCurrency: StateFlow<CurrencyRatesDbModel> = _selectedCurrency
@@ -33,8 +40,8 @@ class CurrencyRatesViewModel @Inject constructor(private val repository: Currenc
         repository.fetchCurrencyRatesFromDb().collect {
             if (it.isNotEmpty()) {
                 _uiState.value = ContentState
-                _currencyRatesList.value = it
-                _selectedCurrency.value = _currencyRatesList.value.first()
+                _originalCurrencyRatesList.value = it
+                _selectedCurrency.value = _originalCurrencyRatesList.value.first()
             } else {
                 if (CurrencyConverterApp.isNetworkConnected) {
                     _uiState.value = LoadingState
@@ -46,7 +53,7 @@ class CurrencyRatesViewModel @Inject constructor(private val repository: Currenc
     fun performConversion(amount: Double) {
         viewModelScope.launch(Dispatchers.Default) {
             val list: MutableList<CurrencyRatesDbModel> = ArrayList()
-            currencyRatesList.value.let { listItems ->
+            originalCurrencyRatesList.value.let { listItems ->
                 if (listItems.isNotEmpty()) {
                     val currencyValue = amount / listItems.filter {
                         selectedCurrency.value.currencyName == it.currencyName
@@ -65,7 +72,7 @@ class CurrencyRatesViewModel @Inject constructor(private val repository: Currenc
                 }
             }
 
-            _currencyRatesList.value = list
+            _conversionCurrencyRatesList.value = list
         }
 
     }

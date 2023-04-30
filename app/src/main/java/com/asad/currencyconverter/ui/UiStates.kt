@@ -1,4 +1,4 @@
-package com.asad.currencyconverter.ui.currencyrates
+package com.asad.currencyconverter.ui
 
 
 sealed class UiStates

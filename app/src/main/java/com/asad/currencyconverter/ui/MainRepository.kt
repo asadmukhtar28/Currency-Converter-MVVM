@@ -1,9 +1,9 @@
-package com.asad.currencyconverter.ui.currencyrates
+package com.asad.currencyconverter.ui
 
 import com.asad.currencyconverter.data.manager.AppDataManager
 import javax.inject.Inject
 
-class CurrencyRatesRepository @Inject constructor(private val dataManager: AppDataManager) {
+class MainRepository @Inject constructor(private val dataManager: AppDataManager) {
 
     fun fetchCurrencyRatesFromDb() = dataManager.getAppDatabaseHelper().getCurrencyRatesList()
 
