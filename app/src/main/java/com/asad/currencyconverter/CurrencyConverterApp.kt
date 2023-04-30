@@ -9,6 +9,7 @@ import androidx.work.NetworkType
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import com.asad.currencyconverter.data.manager.AppDataManager
+import com.asad.currencyconverter.utils.Constants.CURRENCY_EXCHANGE_WORKER_TAG
 import com.asad.currencyconverter.utils.initTimber
 import com.asad.currencyconverter.utils.network.NetworkConnectivityObserverImpl
 import com.asad.currencyconverter.utils.network.NetworkStatus
@@ -34,7 +35,7 @@ class CurrencyConverterApp : Application(), Configuration.Provider {
     }
 
     private val worker by lazy {
-        PeriodicWorkRequestBuilder<ExchangeCurrencyWorker>(1, TimeUnit.DAYS).setConstraints(
+        PeriodicWorkRequestBuilder<ExchangeCurrencyWorker>(24, TimeUnit.HOURS).setConstraints(
             constraint
         ).setInitialDelay(0, TimeUnit.MILLISECONDS).build()
     }
@@ -59,7 +60,11 @@ class CurrencyConverterApp : Application(), Configuration.Provider {
 
     private fun scheduleWorkManager() {
         WorkManager.getInstance(this)
-            .enqueueUniquePeriodicWork("", ExistingPeriodicWorkPolicy.KEEP, worker)
+            .enqueueUniquePeriodicWork(
+                CURRENCY_EXCHANGE_WORKER_TAG,
+                ExistingPeriodicWorkPolicy.KEEP,
+                worker
+            )
     }
 
     override fun getWorkManagerConfiguration() =
