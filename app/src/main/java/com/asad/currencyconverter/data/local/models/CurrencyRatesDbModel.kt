@@ -7,6 +7,6 @@ import com.asad.currencyconverter.utils.Constants
 @Entity(tableName = Constants.CURRENCY_RATES_TABLE)
 data class CurrencyRatesDbModel constructor(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
-    var currencyName: String,
-    var currencyRate: Double
+    var currencyName: String = "",
+    var currencyRate: Double = 0.0
 )
