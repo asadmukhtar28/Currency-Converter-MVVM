@@ -10,7 +10,7 @@ import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import com.asad.currencyconverter.data.manager.AppDataManager
 import com.asad.currencyconverter.utils.Constants.CURRENCY_EXCHANGE_WORKER_TAG
-import com.asad.currencyconverter.utils.initTimber
+import com.asad.currencyconverter.utils.extensions.initTimber
 import com.asad.currencyconverter.utils.network.NetworkConnectivityObserverImpl
 import com.asad.currencyconverter.utils.network.NetworkStatus
 import com.asad.currencyconverter.worker.ExchangeCurrencyWorker

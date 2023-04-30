@@ -1,4 +1,4 @@
-package com.asad.currencyconverter.utils
+package com.asad.currencyconverter.utils.extensions
 
 import java.util.Locale
 

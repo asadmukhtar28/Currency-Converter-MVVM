@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.asad.currencyconverter.CurrencyConverterApp
 import com.asad.currencyconverter.data.local.models.CurrencyRatesDbModel
-import com.asad.currencyconverter.utils.convertDoubleTo2Decimal
+import com.asad.currencyconverter.utils.extensions.convertDoubleTo2Decimal
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow

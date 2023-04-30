@@ -17,10 +17,12 @@ class ExchangeCurrencyWorker @AssistedInject constructor(
 ) : CoroutineWorker(context, workerParams) {
     override suspend fun doWork(): Result {
         val response = dataManager.getApiHelper().fetchLatestCurrencyRates()
-        if (response.isSuccessful && response.body() != null) {
+        return if (response.isSuccessful && response.body() != null) {
             dataManager.getAppDatabaseHelper()
                 .saveCurrencyRatesList(response.body()!!.toCurrencyRatesDbModel())
+            Result.success()
+        } else {
+            Result.failure()
         }
-        return Result.success()
     }
 }

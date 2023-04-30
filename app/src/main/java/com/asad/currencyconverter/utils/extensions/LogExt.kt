@@ -1,4 +1,4 @@
-package com.asad.currencyconverter.utils
+package com.asad.currencyconverter.utils.extensions
 
 import com.asad.currencyconverter.BuildConfig
 import timber.log.Timber

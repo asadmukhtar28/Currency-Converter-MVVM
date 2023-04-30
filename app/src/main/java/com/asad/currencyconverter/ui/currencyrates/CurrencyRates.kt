@@ -2,30 +2,35 @@ package com.asad.currencyconverter.ui.currencyrates
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.material.TextField
 import androidx.compose.material.TextFieldDefaults
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.ExperimentalUnitApi
 import androidx.compose.ui.unit.TextUnit
@@ -38,13 +43,21 @@ import com.asad.currencyconverter.ui.theme.CurrencyConverterTheme
 
 @Composable
 fun CurrencyConverter(viewModel: CurrencyRatesViewModel = viewModel()) {
-
     val uiState = viewModel.uiState.collectAsState()
     val currencyRatesList = viewModel.currencyRatesList.collectAsState().value
+    val selectedCurrency = viewModel.selectedCurrency.collectAsState().value
+
+    var amount by rememberSaveable {
+        mutableStateOf(0.toDouble())
+    }
 
     Column(modifier = Modifier.fillMaxSize()) {
-
-        HeaderSection(modifier = Modifier.fillMaxWidth())
+        HeaderSection(
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            amount = it
+            viewModel.performConversion(amount)
+        }
 
         when (uiState.value) {
             is LoadingState -> {
@@ -65,8 +78,10 @@ fun CurrencyConverter(viewModel: CurrencyRatesViewModel = viewModel()) {
                         .background(
                             color = Color.White,
                             shape = RoundedCornerShape(topStart = 10.dp, topEnd = 10.dp)
-                        ), currencyRatesList
-                )
+                        ), selectedCurrency, currencyRatesList
+                ) { currencyRatesModel ->
+                    viewModel.updateSelectedCurrency(currencyRatesModel)
+                }
             }
 
             is ErrorState -> {
@@ -95,7 +110,8 @@ fun LoadingState(modifier: Modifier = Modifier) {
 fun ErrorState(modifier: Modifier = Modifier) {
     Box(modifier = modifier, contentAlignment = Alignment.Center) {
         Image(
-            painter = painterResource(id = R.drawable.ic_no_result), contentDescription = null,
+            painter = painterResource(id = R.drawable.ic_no_result),
+            contentDescription = null,
             modifier = Modifier.size(100.dp),
             colorFilter = ColorFilter.tint(color = Color.White)
         )
@@ -104,13 +120,18 @@ fun ErrorState(modifier: Modifier = Modifier) {
 
 @Composable
 private fun CurrenciesList(
-    modifier: Modifier = Modifier, currencySymbolDbModel: List<CurrencyRatesDbModel>
+    modifier: Modifier = Modifier,
+    selectedCurrency: CurrencyRatesDbModel,
+    currencySymbolDbModel: List<CurrencyRatesDbModel>,
+    onItemClick: (currencyRatesModel: CurrencyRatesDbModel) -> Unit
 ) {
     LazyColumn(modifier = modifier) {
-        items(items = currencySymbolDbModel, key = { item ->
-            item.id
-        }) {
-            ItemCurrency(it)
+        items(items = currencySymbolDbModel) {
+            ItemCurrency(
+                selectedCurrency, it
+            ) { currencySymbolDbModel ->
+                onItemClick.invoke(currencySymbolDbModel)
+            }
         }
     }
 }
@@ -118,53 +139,93 @@ private fun CurrenciesList(
 @OptIn(ExperimentalUnitApi::class)
 @Composable
 fun ItemCurrency(
+    selectedCurrency: CurrencyRatesDbModel,
     currencyRatesDbModel: CurrencyRatesDbModel = CurrencyRatesDbModel(
         currencyName = "AED", currencyRate = 128.0
-    )
+    ),
+    onItemClick: (currencyRatesModel: CurrencyRatesDbModel) -> Unit
 ) {
+    val currencyIcon by rememberSaveable {
+        mutableStateOf(R.drawable.ic_currency)
+    }
+
+    val currencyName by rememberSaveable {
+        mutableStateOf(currencyRatesDbModel.currencyName)
+    }
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(16.dp),
+            .clickable { onItemClick.invoke(currencyRatesDbModel) },
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+        horizontalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+        Spacer(modifier = Modifier.width(8.dp))
         Image(
-            painter = painterResource(id = R.drawable.ic_currency),
-            contentDescription = null,
-            modifier = Modifier.size(50.dp)
+            painter = painterResource(id = if (selectedCurrency.currencyName == currencyRatesDbModel.currencyName) R.drawable.ic_selected else R.drawable.ic_unselected),
+            contentDescription = null
         )
 
-        Text(
-            text = currencyRatesDbModel.currencyName,
-            fontSize = TextUnit(20f, TextUnitType.Sp),
-            color = Color.Black,
-            modifier = Modifier.weight(1f)
-        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Image(
+                painter = painterResource(id = currencyIcon),
+                contentDescription = null,
+                modifier = Modifier.size(50.dp)
+            )
 
-        Text(
-            text = currencyRatesDbModel.currencyRate.toString(),
-            fontSize = TextUnit(20f, TextUnitType.Sp)
-        )
+            Text(
+                text = currencyName,
+                fontSize = TextUnit(20f, TextUnitType.Sp),
+                color = Color.Black,
+                modifier = Modifier.weight(1f)
+            )
+
+            Text(
+                text = currencyRatesDbModel.currencyRate.toString(),
+                fontSize = TextUnit(20f, TextUnitType.Sp)
+            )
+        }
     }
 }
 
 @Preview
 @Composable
 fun ItemCurrencyPreview() {
-    ItemCurrency()
+    /*ItemCurrency(
+        selectedCurrency = CurrencyRatesDbModel(),
+        currencyRatesDbModel = CurrencyRatesDbModel(),
+        if (selectedCurrency == it) R.drawable.ic_selected else R.drawable.ic_unselected
+    ) {}*/
 }
 
 @OptIn(ExperimentalUnitApi::class)
 @Composable
-fun HeaderSection(modifier: Modifier = Modifier) {
-    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(20.dp)) {
-        Text(
-            text = "Currency Converter", fontSize = TextUnit(30f, TextUnitType.Sp)
-        )
+fun HeaderSection(
+    modifier: Modifier = Modifier, onAmountValueChange: (amount: Double) -> Unit
+) {
+    var amount by rememberSaveable {
+        mutableStateOf("")
+    }
+
+    Row(modifier = modifier) {
         TextField(
-            value = "",
-            onValueChange = {},
+            value = amount,
+            onValueChange = {
+                amount = it
+            },
+            label = {
+                Text(
+                    text = "Enter Value",
+                    style = TextStyle(fontSize = TextUnit(30f, TextUnitType.Sp)),
+                    color = Color.White
+                )
+            },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
             colors = TextFieldDefaults.textFieldColors(
@@ -183,12 +244,17 @@ fun HeaderSection(modifier: Modifier = Modifier) {
                 )
             },
             trailingIcon = {
-                Text(
-                    text = "$", color = Color.White, fontSize = TextUnit(25f, TextUnitType.Sp)
-                )
+                Text(text = "Convert",
+                    color = Color.White,
+                    fontSize = TextUnit(25f, TextUnitType.Sp),
+                    modifier = Modifier.clickable {
+                        onAmountValueChange.invoke(amount.toDouble())
+                    })
             },
-            textStyle = TextStyle(fontSize = TextUnit(30f, TextUnitType.Sp))
+            textStyle = TextStyle(fontSize = TextUnit(30f, TextUnitType.Sp)),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
         )
+        Spacer(modifier = Modifier.width(10.dp))
     }
 }
 
