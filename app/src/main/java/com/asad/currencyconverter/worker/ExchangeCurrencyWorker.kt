@@ -5,18 +5,22 @@ import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.asad.currencyconverter.data.manager.AppDataManager
-import com.asad.currencyconverter.utils.debugLog
+import com.asad.currencyconverter.data.remote.models.latest.toCurrencyRatesDbModel
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 
 @HiltWorker
 class ExchangeCurrencyWorker @AssistedInject constructor(
-    @Assisted context: Context, @Assisted workerParams: WorkerParameters,
-    val dataManager: AppDataManager
+    @Assisted context: Context,
+    @Assisted workerParams: WorkerParameters,
+    private val dataManager: AppDataManager
 ) : CoroutineWorker(context, workerParams) {
     override suspend fun doWork(): Result {
-//        dataManager.getApiHelper().fetchLatestCurrencyRates()
-        debugLog("asad_work", "~~~doWork~~~")
+        val response = dataManager.getApiHelper().fetchLatestCurrencyRates()
+        if (response.isSuccessful && response.body() != null) {
+            dataManager.getAppDatabaseHelper()
+                .saveCurrencyRatesList(response.body()!!.toCurrencyRatesDbModel())
+        }
         return Result.success()
     }
 }
